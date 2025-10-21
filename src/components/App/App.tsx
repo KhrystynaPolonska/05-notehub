@@ -1,95 +1,66 @@
-import {
-  keepPreviousData,
-  useMutation,
-  useQuery,
-  useQueryClient,
-} from '@tanstack/react-query';
-import { useState } from 'react';
-import { useDebounce } from 'use-debounce';
-import { useToggle } from '../../hooks/useToggle';
-import { createNote, deleteNote, fetchNotes } from '../../services/noteService';
-import Modal from '../Modal/Modal';
-import NoteList from '../NoteList/NoteList';
-import Pagination from '../Pagination/Pagination';
-import SearchBox from '../SearchBox/SearchBox';
-import './App.module.css';
+
+import NoteList from '../NoteList/NoteList'
 import css from './App.module.css';
+import Pagination from '../Pagination/Pagination';
+import { useQuery } from '@tanstack/react-query';
+import { fetchNotes } from '../../services/noteService';
+import type { Note } from '../../types/note';
+import { useState } from 'react';
+import SearchBox from '../SearchBox/SearchBox';
+import { useDebounce } from 'use-debounce';
+import NoteForm from '../NoteForm/NoteForm';
+import Modal from '../Modal/Modal';
+import type { NoteResponse } from "../../types/note"
 
-const App = () => {
-  const [params, setParams] = useState({
-    page: 1,
 
-    perPage: 12,
+export default function App() {
+	const [page, setPage] = useState(1);
+	const [search, setSearch] = useState("");
+	const [debouncedSearch] = useDebounce(search, 500);
+	const [isModalOpen, setIsModalOpen] = useState(false);
 
-    search: '',
-  });
+	const perPage = 12;
 
-  const [search, setSearch] = useState('');
+	const { data, isLoading, isError, error } = useQuery<NoteResponse, Error>({
+		queryKey: ["notes", page, debouncedSearch],
+		queryFn: () => fetchNotes(page, perPage, debouncedSearch),
+		placeholderData: (prev) => prev, 
+	  });
 
-  const [debouncedSearch] = useDebounce(search, 500); //
+   const notes: Note[] = data?.notes ?? [];
 
-  const [isOpen, toggle] = useToggle(false);
+   if (isLoading) return <p>Loading...</p>;
+   if (isError) return <p>Error loading notes: {error?.message}</p>;
 
-  const queryClient = useQueryClient();
 
-  const { data, isSuccess } = useQuery({
-    queryKey: ['notes', params.page, debouncedSearch],
-    queryFn: () => {
-      return fetchNotes({ ...params, search: debouncedSearch });
-    },
-    placeholderData: keepPreviousData,
-  });
+   const handleSearch = (value:string) => {
+	setSearch(value);
+	setPage(1);
+   };
+return (
+  <div className={css.app}>
+	<header className={css.toolbar}>
+		<SearchBox onSearch={handleSearch} searchQuery={search}/>
+		{data?.totalPages && data.totalPages > 1 && (
+		<Pagination 
+		page={page}
+		setPage={setPage}
+		totalPages={data.totalPages}
+		/>
+	)}
+		<button className={css.button}
+		onClick={() => setIsModalOpen(true)}
+		>
+			Create note +</button>
+			
+{isModalOpen && (
+  <Modal onClose={() => setIsModalOpen(false)}>
+    <NoteForm onClose={() => setIsModalOpen(false)} />
+  </Modal>
+)}
+  </header>
+  <NoteList  notes = {notes} />
 
-  const addNote = useMutation({
-    mutationFn: createNote,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notes'] });
-      toggle();
-    },
-  });
-
-  const removeNote = useMutation({
-    mutationFn: deleteNote,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notes'] });
-    },
-  });
-
-  const { notes = [], totalPages = 1 } = data ?? {};
-
-  const handlePageChange = ({ selected }: { selected: number }) => {
-    setParams((prev) => ({ ...prev, page: selected + 1 }));
-  };
-
-  return (
-    <div className={css.app}>
-      <header className={css.toolbar}>
-        <SearchBox search={search} setSearch={setSearch} />
-        {totalPages > 1 && (
-          <Pagination
-            pageParams={params}
-            totalPages={totalPages}
-            onChangePage={handlePageChange}
-          />
-        )}
-        <button onClick={toggle} className={css.button}>
-          Create note +
-        </button>
-      </header>
-      {isSuccess && (
-        <>
-          <NoteList
-            notes={notes}
-            deleteNote={(id: string) => removeNote.mutate(id)}
-          />
-        </>
-      )}
-
-      {isOpen && (
-        <Modal onClose={toggle} onSubmit={(values) => addNote.mutate(values)} />
-      )}
-    </div>
-  );
-};
-
-export default App;
+</div>
+);
+}

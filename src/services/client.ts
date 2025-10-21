@@ -1,15 +1,15 @@
-import axios from "axios";
+// import axios from "axios";
 
-const VITE_NOTEHUB_TOKEN = import.meta.env.VITE_NOTEHUB_TOKEN;
+// const VITE_NOTEHUB_TOKEN = import.meta.env.VITE_NOTEHUB_TOKEN;
 
-const URL = import.meta.env.VITE_API_URL;
+// const URL = import.meta.env.VITE_API_URL;
 
-const config = {
-  baseURL: URL,
-  headers: {
-    Authorization: `Bearer ${VITE_NOTEHUB_TOKEN}`,
-    "Content-Type": "application/json",
-  },
-};
+// const config = {
+//   baseURL: URL,
+//   headers: {
+//     Authorization: `Bearer ${VITE_NOTEHUB_TOKEN}`,
+//     "Content-Type": "application/json",
+//   },
+// };
 
-export const apiClient = axios.create(config);
+// export const apiClient = axios.create(config);

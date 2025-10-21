@@ -1,48 +1,45 @@
-import type { Note, NoteCreate } from '../types/note';
-import { apiClient } from './client';
+import axios from "axios";
+import type {  NoteCreate, Note, NoteResponse } from "../types/note";
 
-export interface ApiResponse {
-  notes: Note[];
-  totalPages: number;
+const BASE_URL = "https://notehub-public.goit.study/api/notes"
+
+export async function fetchNotes (page = 1, perPage = 12, search='') {
+  
+  const params: Record<string, string | number> = {
+    page,
+    perPage,
+  };
+
+  if (search.trim()) {
+    params.search = search.trim();
+  }
+  console.log("Request params:", params);
+  const response = await axios.get<NoteResponse>(BASE_URL, {
+    params,
+    headers: {
+        Authorization: `Bearer ${import.meta.env.VITE_NTHB_TOKEN}`,
+    },
+  });
+  return response.data;
 }
 
-export interface apiParams {
-  search?: string;
-  tag?: string;
-  page?: number;
-  perPage?: number;
-  sortBy?: string;
+export async function createNote(note: NoteCreate): Promise<Note> {
+  const response = await axios.post<Note>(BASE_URL, note, {
+  headers: {
+    Authorization: `Bearer ${import.meta.env.VITE_NTHB_TOKEN}`,
+  }
+  });
+  return response.data;
 }
 
-// GET
-export const fetchNotes = async (
-  params: apiParams = {},
-): Promise<ApiResponse> => {
-  const { data } = await apiClient.get<ApiResponse>('/notes', { params });
+export async function deleteNote(id:string): Promise<Note>{
+  const url = `${BASE_URL}/${id}`;
 
-  return data;
-};
-// GET by Id
-export const getNoteById = async (id: string): Promise<Note> => {
-  const { data } = await apiClient.get<Note>(`/notes/${id}`);
+  const response= await axios.delete<Note>(url, {
+    headers: {
+      Authorization: `Bearer ${import.meta.env.VITE_NTHB_TOKEN}`,
+    },
+  });
 
-  return data;
-};
-
-// POST
-export const createNote = async (note: NoteCreate): Promise<Note> => {
-  const { data } = await apiClient.post<Note>('/notes', note);
-
-  return data;
-};
-// PATCH
-export const updateNote = async (note: Note): Promise<Note> => {
-  const { data } = await apiClient.patch<Note>(`/notes/${note.id}`, note);
-
-  return data;
-};
-
-// DELETE
-export const deleteNote = async (id: string): Promise<void> => {
-  await apiClient.delete(`/notes/${id}`);
-};
+  return response.data;
+}
