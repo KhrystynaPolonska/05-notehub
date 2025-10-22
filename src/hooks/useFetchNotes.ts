@@ -7,7 +7,7 @@
 
 //   const response = await fetch(url, {
 //     headers: {
-//       Authorization: `Bearer ${import.meta.env.VITE_NOTEHUB_TOKEN}`,
+//       Authorization: `Bearer ${import.meta.env.VITE_NTHB_TOKEN}`,
 //     },
 //   });
 
