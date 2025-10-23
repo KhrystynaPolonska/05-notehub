@@ -1,7 +1,7 @@
 import axios from "axios";
 import type {  NoteCreate, Note, NoteResponse } from "../types/note";
 
-const BASE_URL = "https://notehub-public.goit.study/api/docs"
+const BASE_URL = "https://notehub-public.goit.study/api/notes"
 
 export async function fetchNotes (page = 1, perPage = 12, search='') {
   
